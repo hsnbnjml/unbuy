@@ -1,0 +1,658 @@
+<!doctype html>
+<!-- UNBUY? v1 — deployable single-file PWA -->
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>UNBUY?</title>
+<meta name="theme-color" content="#fafaf9" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #fafaf9; --card: #ffffff; --ink: #1c1917; --ink2: #44403c;
+    --muted: #a8a29e; --line: #e7e5e4; --soft: #f5f5f4;
+    --green: #059669; --amber: #f59e0b; --amberbg: #fffbeb; --amberink: #92400e;
+    --radius: 16px;
+  }
+  html { background: var(--bg); }
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; }
+  #app { max-width: 448px; margin: 0 auto; min-height: 100vh; }
+  button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  input { font: inherit; }
+
+  .header { position: relative; padding: 24px 20px 4px; text-align: center; }
+  .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+  .header .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .settings-anchor { position: absolute; inset-inline-start: 20px; top: 24px; font-size: 12px; color: var(--muted); text-decoration: underline; text-underline-offset: 4px; }
+
+  .tabs { display: flex; justify-content: center; gap: 8px; padding: 16px 20px 0; }
+  .tab { position: relative; height: 44px; width: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--muted); }
+  .tab.active { background: rgba(28,25,23,0.06); color: var(--ink); }
+  .tab .badge { position: absolute; top: 4px; inset-inline-end: 6px; background: var(--amber); color: #fff; font-size: 10px; font-weight: 600; min-width: 16px; height: 16px; border-radius: 999px; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
+
+  main { padding: 20px; display: grid; gap: 16px; }
+  .card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+  .input { width: 100%; border: 1px solid #d6d3d1; border-radius: 12px; padding: 12px; font-size: 15px; color: var(--ink); background: #fff; outline: none; }
+  .input:focus { border-color: var(--ink); }
+  .input::placeholder { color: #d6d3d1; }
+  .btn { display: block; width: 100%; background: var(--ink); color: #fff; border-radius: 12px; padding: 14px; font-size: 14px; font-weight: 600; opacity: 1; }
+  .btn:disabled { opacity: 0.25; cursor: default; }
+  .btn-sm { padding: 10px; font-weight: 500; }
+  .choice { flex: 1; border: 1px solid #d6d3d1; background: #fff; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 500; color: var(--ink2); }
+  .choice.sel { border-color: var(--ink); color: var(--ink); }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-amber { background: var(--amber); color: #fff; }
+  .btn-ghost { background: #fff; border: 1px solid #d6d3d1; color: var(--ink2); }
+  .row { display: flex; gap: 8px; }
+  .pill { border-radius: 999px; padding: 6px 14px; font-size: 14px; background: var(--soft); color: var(--ink2); }
+  .pill.sel { background: var(--ink); color: #fff; }
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .tiny { color: var(--muted); font-size: 12px; }
+  .big { font-size: 30px; font-weight: 700; }
+  .divider { border-top: 1px solid var(--soft); margin: 16px 0; padding-top: 16px; }
+  .progress { display: flex; gap: 6px; padding: 0 4px; }
+  .progress i { height: 4px; flex: 1; border-radius: 999px; background: #e7e5e4; }
+  .progress i.on { background: var(--ink); }
+  .center { text-align: center; }
+  .verdict-emoji { font-size: 36px; }
+  .verdict-title { font-size: 24px; font-weight: 700; }
+  .scorebar { height: 6px; border-radius: 999px; background: var(--soft); overflow: hidden; margin: 16px auto 8px; max-width: 240px; }
+  .scorebar i { display: block; height: 100%; background: var(--ink); border-radius: 999px; }
+  .countdown { font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .hist { font-size: 14px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .stat-num { font-size: 24px; font-weight: 700; margin-top: 4px; }
+  .budgetbar { height: 6px; border-radius: 999px; background: #e7e5e4; overflow: hidden; }
+  .budgetbar i { display: block; height: 100%; background: var(--ink); border-radius: 999px; }
+  .cand { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: var(--bg); border-radius: 12px; padding: 14px; }
+  .cand b { font-weight: 600; }
+  .fits { color: var(--green); font-size: 12px; font-weight: 600; }
+  .nofits { color: #d6d3d1; font-size: 12px; font-weight: 600; }
+  details { background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  summary { cursor: pointer; color: var(--muted); font-size: 14px; }
+  summary::marker { color: var(--muted); }
+  .hist-row { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; margin-top: 10px; }
+
+  .settings-panel { position: absolute; inset-inline-start: 20px; top: 52px; width: 288px; background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); z-index: 30; text-align: start; }
+  .settings-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .settings-head span { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .closebtn { height: 28px; width: 28px; border-radius: 999px; color: var(--muted); display: flex; align-items: center; justify-content: center; }
+  .closebtn:hover { background: var(--soft); color: var(--ink2); }
+  .field { margin-bottom: 16px; }
+  .field .note { display: block; margin-top: 6px; }
+  .onboard { padding: 40px 20px; display: grid; gap: 24px; }
+  .onboard h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; }
+  .ok-note { background: var(--amberbg); color: var(--amberink); padding: 12px; border-radius: 10px; font-size: 14px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function () {
+  "use strict";
+
+  // ---------- i18n ----------
+  var STR = {
+    en: {
+      hi: function (n) { return "Hi " + n + " · opportunity cost, made visible"; },
+      setup: "Setup", tabLog: "Log", tabQueue: "Queue", tabBudget: "Budget",
+      obWelcome: "Welcome to UNBUY?",
+      obSub: "A 30-second setup, then every purchase decision gets tested against your real constraints.",
+      obName: "What should I call you?", obNamePh: "Your name", obCurrency: "Currency",
+      obIncome: function (c) { return "Your hourly income (" + c + ")"; },
+      obIncomeNote: "Used to reframe prices as hours of your life.",
+      obBudget: function (c) { return "Monthly free-spending budget (" + c + ")"; },
+      obBudgetNote: "The constraint every purchase competes against.",
+      obStart: "Start making better decisions",
+      sName: "Name", sSave: "Save", sLanguage: "Language",
+      sIncome: function (c) { return "Your hourly income (" + c + ")"; },
+      sBudget: function (c) { return "Monthly free-spending budget (" + c + ")"; },
+      lfTitle: "What do you want to buy?",
+      lfNamePh: "e.g. running shoes", lfPricePh: "Price", lfNextCost: "See the real cost",
+      lfHours: function (h) { return h + " hours"; }, lfHoursNote: "of your work to pay for this",
+      lfElse: "This money could instead go to:",
+      lfFade: "How will you feel about this in 3 months?",
+      lfFadeNote: "Most buys fade. Only the ones you'd still log today survive that question.",
+      lfNextCheck: "Quick checklist",
+      lfQOf: function (a, b) { return "Question " + a + " of " + b; },
+      lfQ1: "How many times will you realistically use it?", lfQ1Ph: "e.g. 50",
+      lfCostPerUse: "Cost per use:",
+      lfQ2: "Do you already own something that does 80% of this?", lfYes: "Yes", lfNo: "No",
+      lfQ3: "Honest answer: need or want?", lfNeed: "Need", lfWant: "Want",
+      lfQ4: "What happens if you just wait 30 days?",
+      lfQ4Note: 'If the answer is "nothing bad", waiting is free. Impulse wants usually die on their own — the timer will test it for you.',
+      lfVerdict: "See verdict", lfNext: "Next",
+      vBuy: { label: "Green light", emoji: "✅", note: "Strong value per riyal. Buy with confidence." },
+      vWait: { label: "Cool off", emoji: "⏳", note: "Not obviously bad, not obviously great. Let it wait 72 hours." },
+      vSkip: { label: "Skip it", emoji: "🛑", note: "Weak value or you already own something close. Free up the money." },
+      vScore: function (s) { return "Value score " + s + "/100"; },
+      bBuy: "Buy it", bWait: "Wait 72h", bSkip: "Skip",
+      qEmpty1: "Nothing in the cooling-off queue.",
+      qEmpty2: "Log a want and let the timer test it.",
+      qDone: "Timer done. Do you still want it — or has the urge faded?",
+      qStill: "Still want it — buy", qFaded: "Urge faded — skip",
+      qImpatient: "Buy anyway", qOver: "Already over it — skip",
+      qHistory: function (n) { return "History (" + n + ")"; },
+      qBought: "bought", qSkipped: "skipped", qReady: "Ready",
+      buRemaining: "Remaining budget", buSaved: "Saved by skipping",
+      buOf: function (b, s) { return "of " + b + " · spent " + s; },
+      buSkips: function (n, p) { return n + " skips · " + p + "% urges faded"; },
+      buRankNote: "Waiting items ranked by value score. Buying one means the others may not fit — the constraint, made visible.",
+      buFits: "fits budget", buNoFit: "doesn't fit",
+      buNone: "No candidates waiting. Your budget is unconstrained — for now."
+    },
+    ar: {
+      hi: function (n) { return "أهلاً " + n + " · تكلفة الفرصة البديلة، أمام عينيك"; },
+      setup: "الإعدادات", tabLog: "تسجيل", tabQueue: "الانتظار", tabBudget: "الميزانية",
+      obWelcome: "أهلاً بك في UNBUY?",
+      obSub: "إعداد لا يستغرق ٣٠ ثانية، ثم يُختبر كل قرار شراء أمام قيودك الحقيقية.",
+      obName: "ماذا أناديك؟", obNamePh: "اسمك", obCurrency: "العملة",
+      obIncome: function (c) { return "دخلك في الساعة (" + c + ")"; },
+      obIncomeNote: "لتحويل الأسعار إلى ساعات من عمرك.",
+      obBudget: function (c) { return "ميزانية الشراء الحر شهرياً (" + c + ")"; },
+      obBudgetNote: "القيد الذي يتنافس عليه كل شراء.",
+      obStart: "ابدأ اتخاذ قرارات أفضل",
+      sName: "الاسم", sSave: "حفظ", sLanguage: "اللغة",
+      sIncome: function (c) { return "دخلك في الساعة (" + c + ")"; },
+      sBudget: function (c) { return "ميزانية الشراء الحر شهرياً (" + c + ")"; },
+      lfTitle: "ماذا تريد أن تشتري؟",
+      lfNamePh: "مثال: حذاء رياضي", lfPricePh: "السعر", lfNextCost: "شاهد التكلفة الحقيقية",
+      lfHours: function (h) { return h + " ساعات"; }, lfHoursNote: "من عملك لدفعه",
+      lfElse: "هذا المال يمكن أن يذهب بدلاً منه إلى:",
+      lfFade: "كيف ستشعر تجاهه بعد ٣ أشهر؟",
+      lfFadeNote: "معظم المشتريات يزول أثرها. فقط ما كنت ستسجّله اليوم ينجو من هذا السؤال.",
+      lfNextCheck: "أسئلة سريعة",
+      lfQOf: function (a, b) { return "السؤال " + a + " من " + b; },
+      lfQ1: "كم مرة ستستخدمه فعلياً؟", lfQ1Ph: "مثال: ٥٠",
+      lfCostPerUse: "تكلفة الاستخدام الواحد:",
+      lfQ2: "هل تملك شيئاً يؤدي ٨٠٪ من وظيفته؟", lfYes: "نعم", lfNo: "لا",
+      lfQ3: "بصراحة: حاجة أم رغبة؟", lfNeed: "حاجة", lfWant: "رغبة",
+      lfQ4: "ماذا لو انتظرت ٣٠ يوماً فقط؟",
+      lfQ4Note: "إذا كان الجواب «لا شيء سيء»، فالانتظار مجاني. الرغبات المتسرعة تموت وحدها — والمؤقت سيختبرها لك.",
+      lfVerdict: "شاهد القرار", lfNext: "التالي",
+      vBuy: { label: "ضوء أخضر", emoji: "✅", note: "قيمة قوية مقابل المال. اشترِ بثقة." },
+      vWait: { label: "فترة تهدئة", emoji: "⏳", note: "لا سيئ بوضوح ولا رائع بوضوح. دعه ينتظر ٧٢ ساعة." },
+      vSkip: { label: "تجاهله", emoji: "🛑", note: "قيمة ضعيفة أو تملك شيئاً قريباً منه. وفّر المال." },
+      vScore: function (s) { return "درجة القيمة " + s + "/100"; },
+      bBuy: "اشترِ", bWait: "انتظر ٧٢ ساعة", bSkip: "تجاهل",
+      qEmpty1: "لا شيء في قائمة التهدئة.",
+      qEmpty2: "سجّل رغبة ودع المؤقت يختبرها.",
+      qDone: "انتهى الوقت. ما زلت تريده — أم زال الشوق؟",
+      qStill: "ما زلت أريده — اشترِ", qFaded: "زال الشوق — تجاهل",
+      qImpatient: "اشترِ على أي حال", qOver: "تعديته بالفعل — تجاهل",
+      qHistory: function (n) { return "السجل (" + n + ")"; },
+      qBought: "تم شراؤه", qSkipped: "تم تجاهله", qReady: "جاهز",
+      buRemaining: "الميزانية المتبقية", buSaved: "وفّرت بالتجاهل",
+      buOf: function (b, s) { return "من " + b + " · أُنفق " + s; },
+      buSkips: function (n, p) { return n + " تجاهل · " + p + "% من الرغبات زالت"; },
+      buRankNote: "عناصر الانتظار مرتبة بدرجة القيمة. شراء أحدها يعني أن الباقي قد لا يتسع — القيد أمام عينيك.",
+      buFits: "يتسع في الميزانية", buNoFit: "لا يتسع",
+      buNone: "لا عناصر تنتظر. ميزانيتك بلا قيود — حالياً."
+    }
+  };
+
+  var GOALS = {
+    en: ["Save / invest", "Emergency fund", "Another item on my list", "A treat for family", "Travel fund"],
+    ar: ["ادخار / استثمار", "صندوق الطوارئ", "شيء آخر في قائمتي", "هدية للعائلة", "صندوق السفر"]
+  };
+  var CURRENCIES = ["EGP", "SAR", "AED", "USD", "EUR"];
+  var COOLDOWN_MS = 72 * 60 * 60 * 1000;
+
+  // ---------- persistence ----------
+  function loadJSON(key, fallback) {
+    try { var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+    catch (e) { return fallback; }
+  }
+  function saveJSON(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+  }
+  function loadSettings() {
+    var def = { name: "", hourlyIncome: 0, monthlyBudget: 0, currency: "EGP", lang: "en", goals: GOALS.en };
+    var s = loadJSON("bow_settings", def);
+    return {
+      name: s.name || "",
+      hourlyIncome: typeof s.hourlyIncome === "number" ? s.hourlyIncome : 0,
+      monthlyBudget: typeof s.monthlyBudget === "number" ? s.monthlyBudget : 0,
+      currency: s.currency || "EGP",
+      lang: s.lang === "ar" || s.lang === "en" ? s.lang : "en",
+      goals: Array.isArray(s.goals) && s.goals.length ? s.goals : GOALS.en
+    };
+  }
+
+  // ---------- state ----------
+  var state = {
+    settings: loadSettings(),
+    items: loadJSON("bow_items", []),
+    ui: {
+      tab: "log",
+      step: 0,
+      draft: { name: "", price: "", uses: "", ownsSimilar: null, need: null, opportunity: null },
+      settingsOpen: false,
+      settingsDraft: null,
+      onboard: { name: "", currency: null, income: "", budget: "" }
+    }
+  };
+  function persist() { saveJSON("bow_settings", state.settings); saveJSON("bow_items", state.items); }
+
+  // ---------- helpers ----------
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function money(n, cur) { return Math.round(n).toLocaleString("en-US") + " " + cur; }
+  function T() { return STR[state.settings.lang] || STR.en; }
+  function hoursOfWork(price) { return state.settings.hourlyIncome > 0 ? price / state.settings.hourlyIncome : 0; }
+  function computeScore(price, uses, need, ownsSimilar) {
+    var s = 50;
+    var cpu = uses > 0 ? price / uses : price;
+    if (cpu <= 20) s += 25; else if (cpu <= 100) s += 12; else if (cpu > 500) s -= 20; else s -= 5;
+    if (need) s += 20; else s -= 10;
+    if (ownsSimilar) s -= 25;
+    return Math.max(0, Math.min(100, s));
+  }
+  function countdownText(expiresAt) {
+    var ms = Math.max(0, expiresAt - Date.now());
+    if (ms === 0) return T().qReady;
+    var h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000), s = Math.floor((ms % 60000) / 1000);
+    function p(n) { return (n < 10 ? "0" : "") + n; }
+    return p(h) + ":" + p(m) + ":" + p(s);
+  }
+
+  // ---------- views ----------
+  var ICONS = {
+    log: '<path d="M12 5v14M5 12h14"/>',
+    queue: '<path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>',
+    budget: '<path d="M3 6h18M3 12h18M3 18h12"/>',
+    close: '<path d="M18 6 6 18M6 6l12 12"/>'
+  };
+  function svg(icon, size, stroke) {
+    return '<svg viewBox="0 0 24 24" width="' + (size || 20) + '" height="' + (size || 20) +
+      '" fill="none" stroke="' + (stroke || "currentColor") + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + ICONS[icon] + "</svg>";
+  }
+
+  function viewOnboarding() {
+    var t = T(), ob = state.ui.onboard;
+    if (!ob.currency) ob.currency = state.settings.currency;
+    var cur = ob.currency;
+    var canStart = ob.name.trim() && parseFloat(ob.income) > 0 && parseFloat(ob.budget) > 0;
+    var pills = CURRENCIES.map(function (c) {
+      return '<button class="pill' + (cur === c ? " sel" : "") + '" data-action="obCurrency" data-val="' + c + '">' + c + "</button>";
+    }).join("");
+    return '<div class="onboard">' +
+      '<div class="center"><h1 dir="ltr">UNBUY?</h1><p class="muted" style="margin-top:8px">' + esc(t.obSub) + "</p></div>" +
+      '<div class="card">' +
+        '<div class="field"><span class="label">' + esc(t.obName) + '</span><input class="input" data-bind="ob.name" placeholder="' + esc(t.obNamePh) + '" value="' + esc(ob.name) + '" /></div>' +
+        '<div class="field"><span class="label">' + esc(t.obCurrency) + '</span><div class="pills">' + pills + "</div></div>" +
+        '<div class="field"><span class="label">' + esc(t.obIncome(cur)) + '</span><input class="input" data-bind="ob.income" inputmode="decimal" placeholder="e.g. 120" value="' + esc(ob.income) + '" /><span class="tiny note">' + esc(t.obIncomeNote) + "</span></div>" +
+        '<div class="field"><span class="label">' + esc(t.obBudget(cur)) + '</span><input class="input" data-bind="ob.budget" inputmode="decimal" placeholder="e.g. 5000" value="' + esc(ob.budget) + '" /><span class="tiny note">' + esc(t.obBudgetNote) + "</span></div>" +
+      "</div>" +
+      '<button class="btn" data-action="obStart"' + (canStart ? "" : " disabled") + ">" + esc(t.obStart) + "</button>" +
+      "</div>";
+  }
+
+  function viewSettingsPanel() {
+    if (!state.ui.settingsOpen) return "";
+    var t = T(), s = state.settings, d = state.ui.settingsDraft;
+    var curPills = CURRENCIES.map(function (c) {
+      return '<button class="pill' + (d.currency === c ? " sel" : "") + '" data-action="setCurrency" data-val="' + c + '">' + c + "</button>";
+    }).join("");
+    return '<div class="settings-panel">' +
+      '<div class="settings-head"><span>' + esc(t.setup) + '</span><button class="closebtn" data-action="closeSettings" aria-label="close">' + svg("close", 16) + "</button></div>" +
+      '<div class="field"><span class="label">' + esc(t.sLanguage) + '</span><div class="pills">' +
+        '<button class="pill' + (s.lang === "en" ? " sel" : "") + '" data-action="setLang" data-val="en">English</button>' +
+        '<button class="pill' + (s.lang === "ar" ? " sel" : "") + '" data-action="setLang" data-val="ar">العربية</button>' +
+      "</div></div>" +
+      '<div class="field"><span class="label">' + esc(t.sName) + '</span><input class="input" data-bind="set.name" value="' + esc(d.name) + '" /></div>' +
+      '<div class="field"><span class="label">' + esc(t.obCurrency) + '</span><div class="pills">' + curPills + "</div></div>" +
+      '<div class="field"><span class="label">' + esc(t.sIncome(d.currency)) + '</span><input class="input" data-bind="set.income" inputmode="decimal" value="' + esc(d.income) + '" /></div>' +
+      '<div class="field"><span class="label">' + esc(t.sBudget(d.currency)) + '</span><input class="input" data-bind="set.budget" inputmode="decimal" value="' + esc(d.budget) + '" /></div>' +
+      '<button class="btn" data-action="saveSettings">' + esc(t.sSave) + "</button>" +
+      "</div>";
+  }
+
+  function viewLog() {
+    var t = T(), s = state.settings, d = state.ui.draft, step = state.ui.step;
+    var priceNum = parseFloat(d.price) || 0;
+    var usesNum = parseInt(d.uses, 10) || 0;
+    var cpu = usesNum > 0 ? priceNum / usesNum : 0;
+    var score = computeScore(priceNum, usesNum, d.need === true, d.ownsSimilar === true);
+    var verdict = score >= 65 ? "buy" : score >= 40 ? "wait" : "skip";
+    var vm = { buy: t.vBuy, wait: t.vWait, skip: t.vSkip }[verdict];
+
+    if (step === 0) {
+      return '<h2 style="padding:0 4px;font-size:17px;font-weight:600">' + esc(t.lfTitle) + "</h2>" +
+        '<input class="input" data-bind="draft.name" placeholder="' + esc(t.lfNamePh) + '" value="' + esc(d.name) + '" />' +
+        '<input class="input" data-bind="draft.price" inputmode="decimal" placeholder="' + esc(t.lfPricePh) + '" value="' + esc(d.price) + '" />' +
+        '<button class="btn" data-action="step1"' + (d.name.trim() && priceNum > 0 ? "" : " disabled") + ">" + esc(t.lfNextCost) + "</button>";
+    }
+    if (step === 1) {
+      var goalPills = s.goals.map(function (g) {
+        return '<button class="pill' + (d.opportunity === g ? " sel" : "") + '" data-action="setOpportunity" data-val="' + esc(g) + '">' + esc(g) + "</button>";
+      }).join("");
+      return '<p class="muted" style="padding:0 4px">' + esc(d.name) + " · " + money(priceNum, s.currency) + "</p>" +
+        '<div class="card">' +
+          '<div><div class="big">' + esc(t.lfHours(hoursOfWork(priceNum).toFixed(1))) + '</div><p class="muted">' + esc(t.lfHoursNote) + "</p></div>" +
+          '<div class="divider"><p class="muted" style="margin-bottom:8px">' + esc(t.lfElse) + '</p><div class="pills">' + goalPills + "</div></div>" +
+          '<div class="divider"><p style="font-weight:600">' + esc(t.lfFade) + '</p><p class="muted" style="margin-top:4px">' + esc(t.lfFadeNote) + "</p></div>" +
+        "</div>" +
+        '<button class="btn" data-action="step2"' + (d.opportunity ? "" : " disabled") + ">" + esc(t.lfNextCheck) + "</button>";
+    }
+
+    var questions = [
+      {
+        prompt: t.lfQ1,
+        body: '<input class="input" data-bind="draft.uses" inputmode="numeric" placeholder="' + esc(t.lfQ1Ph) + '" value="' + esc(d.uses) + '" />' +
+          (usesNum > 0 ? '<p class="muted" style="margin-top:12px">' + esc(t.lfCostPerUse) + ' <b style="color:var(--ink)">' + money(cpu, s.currency) + "</b></p>" : ""),
+        canNext: usesNum > 0, next: "step3", inline: false
+      },
+      {
+        prompt: t.lfQ2,
+        body: '<div class="row"><button class="choice' + (d.ownsSimilar === true ? " sel" : "") + '" data-action="answerOwn" data-val="1">' + esc(t.lfYes) + '</button><button class="choice' + (d.ownsSimilar === false ? " sel" : "") + '" data-action="answerOwn" data-val="0">' + esc(t.lfNo) + "</button></div>",
+        canNext: true, next: "step4", inline: true
+      },
+      {
+        prompt: t.lfQ3,
+        body: '<div class="row"><button class="choice' + (d.need === true ? " sel" : "") + '" data-action="answerNeed" data-val="1">' + esc(t.lfNeed) + '</button><button class="choice' + (d.need === false ? " sel" : "") + '" data-action="answerNeed" data-val="0">' + esc(t.lfWant) + "</button></div>",
+        canNext: true, next: "step5", inline: true
+      },
+      {
+        prompt: t.lfQ4,
+        body: '<p class="muted" style="line-height:1.6">' + esc(t.lfQ4Note) + "</p>",
+        canNext: true, next: "verdict", inline: false
+      }
+    ];
+
+    var qIndex = step - 2;
+    if (qIndex >= 0 && qIndex < questions.length) {
+      var q = questions[qIndex];
+      var dots = questions.map(function (_, i) {
+        return "<i" + (i <= qIndex ? ' class="on"' : "") + "></i>";
+      }).join("");
+      return '<div class="progress">' + dots + "</div>" +
+        '<div class="card"><p class="tiny" style="margin-bottom:4px">' + esc(t.lfQOf(qIndex + 1, questions.length)) + '</p><h2 style="font-size:17px;font-weight:600;margin-bottom:16px">' + esc(q.prompt) + "</h2>" + q.body + "</div>" +
+        (q.inline ? "" : '<button class="btn" data-action="' + q.next + '"' + (q.canNext ? "" : " disabled") + ">" + esc(qIndex === 3 ? t.lfVerdict : t.lfNext) + "</button>");
+    }
+
+    return '<div class="card center">' +
+        '<div class="verdict-emoji">' + vm.emoji + '</div>' +
+        '<h2 class="verdict-title" style="margin-top:8px">' + esc(vm.label) + '</h2>' +
+        '<p class="muted" style="margin-top:4px">' + esc(vm.note) + "</p>" +
+        '<div class="scorebar"><i style="width:' + score + '%"></i></div>' +
+        '<p class="tiny">' + esc(t.vScore(score)) + "</p>" +
+      "</div>" +
+      '<div class="row">' +
+        '<button class="btn btn-green btn-sm" style="flex:1;padding:14px" data-action="decide" data-val="buy">' + esc(t.bBuy) + "</button>" +
+        '<button class="btn btn-amber" style="flex:1;padding:14px" data-action="decide" data-val="wait">' + esc(t.bWait) + "</button>" +
+        '<button class="btn btn-ghost" style="flex:1;padding:14px" data-action="decide" data-val="skip">' + esc(t.bSkip) + "</button>" +
+      "</div>";
+  }
+
+  function viewQueue() {
+    var t = T();
+    var waiting = state.items.filter(function (i) { return i.decision === "wait"; });
+    var history = state.items.filter(function (i) { return i.decision !== "wait"; });
+    if (waiting.length === 0) {
+      return '<div class="card center"><p style="font-weight:600">' + esc(t.qEmpty1) + '</p><p class="muted" style="margin-top:4px">' + esc(t.qEmpty2) + "</p></div>";
+    }
+    var cards = waiting.map(function (it) {
+      var expired = Date.now() >= it.expiresAt;
+      var actions = expired
+        ? '<p class="ok-note">' + esc(t.qDone) + "</p>" +
+          '<div class="row" style="margin-top:12px">' +
+            '<button class="btn btn-green btn-sm" style="flex:1" data-action="queueStill" data-id="' + it.id + '">' + esc(t.qStill) + "</button>" +
+            '<button class="btn btn-ghost btn-sm" style="flex:1" data-action="queueFaded" data-id="' + it.id + '">' + esc(t.qFaded) + "</button>" +
+          "</div>"
+        : '<div class="row">' +
+            '<button class="btn btn-ghost btn-sm" style="flex:1;color:var(--muted)" data-action="queueImpatient" data-id="' + it.id + '">' + esc(t.qImpatient) + "</button>" +
+            '<button class="btn btn-ghost btn-sm" style="flex:1;color:var(--muted)" data-action="queueOver" data-id="' + it.id + '">' + esc(t.qOver) + "</button>" +
+          "</div>";
+      return '<div class="card">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">' +
+          '<div><h3 style="font-weight:600">' + esc(it.name) + '</h3><p class="muted">' + money(it.price, state.settings.currency) + " · " + esc(t.vScore(it.score)) + "</p></div>" +
+          '<span class="countdown">' + countdownText(it.expiresAt) + "</span>" +
+        "</div>" +
+        '<div style="margin-top:16px">' + actions + "</div>" +
+        "</div>";
+    }).join("");
+
+    var hist = "";
+    if (history.length > 0) {
+      var rows = history.slice().reverse().map(function (it) {
+        return '<div class="hist-row"><span style="color:var(--ink2)">' + esc(it.name) + " · " + money(it.price, state.settings.currency) + "</span><span style=\"color:" + (it.decision === "buy" ? "var(--green)" : "#d6d3d1") + '">' + esc(it.decision === "buy" ? t.qBought : t.qSkipped) + "</span></div>";
+      }).join("");
+      hist = "<details><summary>" + esc(t.qHistory(history.length)) + "</summary>" + rows + "</details>";
+    }
+    return cards + hist;
+  }
+
+  function viewBudget() {
+    var t = T(), s = state.settings;
+    var purchased = state.items.filter(function (i) { return i.purchased; });
+    var spent = purchased.reduce(function (a, i) { return a + i.price; }, 0);
+    var remaining = Math.max(0, s.monthlyBudget - spent);
+    var skipped = state.items.filter(function (i) { return i.decision === "skip"; });
+    var saved = skipped.reduce(function (a, i) { return a + i.price; }, 0);
+    var faded = state.items.filter(function (i) { return i.stillWants === false; }).length;
+    var pct = skipped.length ? Math.round((faded / skipped.length) * 100) : 0;
+    var barPct = Math.min(100, (spent / Math.max(1, s.monthlyBudget)) * 100);
+
+    var candidates = state.items.filter(function (i) { return i.decision === "wait"; })
+      .sort(function (a, b) { return b.score - a.score; });
+    var running = 0;
+    var rows = candidates.map(function (c, idx) {
+      var fits = running + c.price <= remaining;
+      if (fits) running += c.price;
+      return '<div class="cand"><div><b>' + (idx + 1) + ". " + esc(c.name) + '</b><div class="tiny">' + money(c.price, s.currency) + " · " + esc(t.vScore(c.score)) + '</div></div><span class="' + (fits ? "fits" : "nofits") + '">' + esc(fits ? t.buFits : t.buNoFit) + "</span></div>";
+    }).join("");
+
+    return '<div class="grid2">' +
+        '<div class="card"><p class="tiny">' + esc(t.buRemaining) + '</p><p class="stat-num">' + money(remaining, s.currency) + '</p><p class="tiny" style="margin-top:4px">' + esc(t.buOf(money(s.monthlyBudget, s.currency), money(spent, s.currency))) + "</p></div>" +
+        '<div class="card"><p class="tiny">' + esc(t.buSaved) + '</p><p class="stat-num" style="color:var(--green)">' + money(saved, s.currency) + '</p><p class="tiny" style="margin-top:4px">' + esc(t.buSkips(skipped.length, pct)) + "</p></div>" +
+      "</div>" +
+      '<div class="budgetbar"><i style="width:' + barPct + '%"></i></div>' +
+      (candidates.length > 0
+        ? '<div class="card"><p class="muted" style="margin-bottom:16px;line-height:1.5">' + esc(t.buRankNote) + '</p><div style="display:grid;gap:8px">' + rows + "</div></div>"
+        : '<div class="card muted">' + esc(t.buNone) + "</div>");
+  }
+
+  // ---------- render ----------
+  function render() {
+    var app = document.getElementById("app");
+    var s = state.settings, t = T();
+    document.documentElement.lang = s.lang;
+    document.documentElement.dir = s.lang === "ar" ? "rtl" : "ltr";
+    document.title = "UNBUY?";
+
+    if (!s.name) { app.innerHTML = viewOnboarding(); return; }
+
+    var waitingCount = state.items.filter(function (i) { return i.decision === "wait"; }).length;
+    var tabs = [
+      { id: "log", icon: "log", label: t.tabLog },
+      { id: "queue", icon: "queue", label: t.tabQueue },
+      { id: "budget", icon: "budget", label: t.tabBudget }
+    ].map(function (tb) {
+      return '<button class="tab' + (state.ui.tab === tb.id ? " active" : "") + '" data-action="tab" data-val="' + tb.id + '" title="' + esc(tb.label) + '" aria-label="' + esc(tb.label) + '">' + svg(tb.icon, 20, state.ui.tab === tb.id ? "#1c1917" : "#a8a29e") +
+        (tb.id === "queue" && waitingCount > 0 ? '<span class="badge">' + waitingCount + "</span>" : "") + "</button>";
+    }).join("");
+
+    var body = state.ui.tab === "log" ? viewLog() : state.ui.tab === "queue" ? viewQueue() : viewBudget();
+
+    app.innerHTML =
+      '<div class="header">' +
+        '<h1 dir="ltr">UNBUY?</h1>' +
+        '<p class="sub">' + esc(t.hi(s.name)) + "</p>" +
+        '<button class="settings-anchor" data-action="openSettings">' + esc(t.setup) + "</button>" +
+        viewSettingsPanel() +
+      "</div>" +
+      '<nav class="tabs">' + tabs + "</nav>" +
+      "<main>" + body + "</main>";
+  }
+
+  // keep the queue countdown ticking
+  setInterval(function () {
+    if (state.ui.tab === "queue" && state.settings.name) {
+      var hasWaiting = state.items.some(function (i) { return i.decision === "wait"; });
+      if (hasWaiting) render();
+    }
+  }, 1000);
+
+  // ---------- actions ----------
+  function newId() {
+    return typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2);
+  }
+
+  document.addEventListener("click", function (e) {
+    var el = e.target.closest("[data-action]");
+    if (!el) return;
+    var a = el.getAttribute("data-action"), v = el.getAttribute("data-val"), id = el.getAttribute("data-id");
+    var t = T(), ui = state.ui, s = state.settings;
+
+    if (a === "tab") { ui.tab = v; }
+    else if (a === "step1") { ui.step = 1; }
+    else if (a === "step2") { ui.step = 2; }
+    else if (a === "step3") { ui.step = 3; }
+    else if (a === "step4") { ui.step = 4; }
+    else if (a === "step5") { ui.step = 5; }
+    else if (a === "verdict") { ui.step = 6; }
+    else if (a === "setOpportunity") { ui.draft.opportunity = v; }
+    else if (a === "answerOwn") { ui.draft.ownsSimilar = v === "1"; ui.step = 4; }
+    else if (a === "answerNeed") { ui.draft.need = v === "1"; ui.step = 5; }
+    else if (a === "decide") {
+      var d = ui.draft;
+      var priceNum = parseFloat(d.price) || 0;
+      var usesNum = parseInt(d.uses, 10) || 0;
+      var score = computeScore(priceNum, usesNum, d.need === true, d.ownsSimilar === true);
+      state.items.push({
+        id: newId(), name: d.name, price: priceNum, createdAt: Date.now(), decision: v,
+        expiresAt: v === "wait" ? Date.now() + COOLDOWN_MS : 0,
+        uses: usesNum, need: d.need === true, ownsSimilar: d.ownsSimilar === true,
+        opportunity: d.opportunity || "", score: score, stillWants: null, purchased: v === "buy"
+      });
+      ui.draft = { name: "", price: "", uses: "", ownsSimilar: null, need: null, opportunity: null };
+      ui.step = 0;
+      ui.tab = v === "wait" ? "queue" : "budget";
+      persist();
+    }
+    else if (a === "queueStill" || a === "queueImpatient") {
+      state.items = state.items.map(function (x) {
+        if (x.id === id) return Object.assign({}, x, { decision: "buy", purchased: true, stillWants: a === "queueStill" ? true : x.stillWants });
+        return x;
+      });
+      persist();
+    }
+    else if (a === "queueFaded" || a === "queueOver") {
+      state.items = state.items.map(function (x) {
+        if (x.id === id) return Object.assign({}, x, { decision: "skip", stillWants: a === "queueFaded" ? false : x.stillWants });
+        return x;
+      });
+      persist();
+    }
+    else if (a === "obCurrency") { ui.onboard.currency = v; }
+    else if (a === "obStart") {
+      s.name = ui.onboard.name.trim();
+      s.currency = ui.onboard.currency || "EGP";
+      s.hourlyIncome = parseFloat(ui.onboard.income) || 0;
+      s.monthlyBudget = parseFloat(ui.onboard.budget) || 0;
+      persist();
+    }
+    else if (a === "openSettings") {
+      ui.settingsDraft = { name: s.name, currency: s.currency, income: String(s.hourlyIncome), budget: String(s.monthlyBudget) };
+      ui.settingsOpen = true;
+    }
+    else if (a === "closeSettings") { ui.settingsOpen = false; }
+    else if (a === "setLang") {
+      s.lang = v;
+      s.goals = GOALS[v];
+      ui.settingsDraft.currency = ui.settingsDraft.currency || s.currency;
+      persist();
+    }
+    else if (a === "setCurrency") { ui.settingsDraft.currency = v; }
+    else if (a === "saveSettings") {
+      s.name = ui.settingsDraft.name.trim() || s.name;
+      s.currency = ui.settingsDraft.currency;
+      s.hourlyIncome = parseFloat(ui.settingsDraft.income) || 0;
+      s.monthlyBudget = parseFloat(ui.settingsDraft.budget) || 0;
+      ui.settingsOpen = false;
+      persist();
+    }
+    render();
+  });
+
+  document.addEventListener("input", function (e) {
+    var el = e.target;
+    var bind = el.getAttribute("data-bind");
+    if (!bind) return;
+    var val = el.value;
+    if (bind === "ob.name") state.ui.onboard.name = val;
+    else if (bind === "ob.income") state.ui.onboard.income = val;
+    else if (bind === "ob.budget") state.ui.onboard.budget = val;
+    else if (bind === "draft.name") state.ui.draft.name = val;
+    else if (bind === "draft.price") state.ui.draft.price = val;
+    else if (bind === "draft.uses") state.ui.draft.uses = val;
+    else if (bind === "set.name") state.ui.settingsDraft.name = val;
+    else if (bind === "set.income") state.ui.settingsDraft.income = val;
+    else if (bind === "set.budget") state.ui.settingsDraft.budget = val;
+    // update only button disabled states, keep focus
+    refreshDisabled();
+  });
+
+  function refreshDisabled() {
+    var d = state.ui.draft, ob = state.ui.onboard;
+    var map = {
+      step1: d.name.trim() && (parseFloat(d.price) > 0),
+      step3: parseInt(d.uses, 10) > 0,
+      step2: !!d.opportunity,
+      obStart: ob.name.trim() && parseFloat(ob.income) > 0 && parseFloat(ob.budget) > 0
+    };
+    Object.keys(map).forEach(function (k) {
+      var btn = document.querySelector('[data-action="' + k + '"]');
+      if (btn) btn.disabled = !map[k];
+    });
+  }
+
+  // ---------- PWA manifest (embedded) ----------
+  function makeIcon(size) {
+    var c = document.createElement("canvas");
+    c.width = size; c.height = size;
+    var ctx = c.getContext("2d");
+    ctx.fillStyle = "#1c1917";
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold " + Math.round(size * 0.42) + "px ui-sans-serif, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("U?", size / 2, size / 2 + size * 0.02);
+    return c.toDataURL("image/png");
+  }
+  try {
+    var icon512 = makeIcon(512), icon192 = makeIcon(192);
+    var manifest = {
+      name: "UNBUY?",
+      short_name: "UNBUY?",
+      description: "Opportunity cost, made visible — a purchase decision app.",
+      start_url: ".",
+      scope: ".",
+      display: "standalone",
+      background_color: "#fafaf9",
+      theme_color: "#fafaf9",
+      icons: [
+        { src: icon192, sizes: "192x192", type: "image/png" },
+        { src: icon512, sizes: "512x512", type: "image/png" }
+      ]
+    };
+    var link = document.createElement("link");
+    link.rel = "manifest";
+    link.href = "data:application/manifest+json," + encodeURIComponent(JSON.stringify(manifest));
+    document.head.appendChild(link);
+  } catch (e) { /* manifest is a nice-to-have */ }
+
+  render();
+})();
+</script>
+</body>
+</html>
